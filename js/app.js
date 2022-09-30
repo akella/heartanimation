@@ -524,7 +524,7 @@ export default class Sketch {
       for (let i = 0; i < this.number; i++) {
         this.sampler.sample(this._position, this._normal);
         // console.log(this._position.x, this._position.y, this._position.z);
-        this._position.multiplyScalar(0.095);
+        this._position.multiplyScalar(0.08);
         this._position.z -= 0.03;
         // this._position.x+=0.02
 

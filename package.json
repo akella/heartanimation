@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "@parcel/config-default": "^2.7.0",
-    "gsap": "^3.11.1",
+    "gsap": "^3.11.2",
     "lil-gui": "^0.17.0",
     "simple-input-events": "^2.0.0",
     "three": "^0.144.0",
