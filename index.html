@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style>
+		*{margin:0;padding:0} 
+		canvas{display: block}
+		#canvas{width: 100vw;height: 100vh}
+		body,html{
+			background: #000;
+			overscroll-behavior: none;
+			overscroll-behavior-y: none;
+		}
+		.interactive-layer{
+			position: absolute;
+			inset: 0;
+			text-transform: uppercase;
+			color: #fff;
+			font-family: sans-serif;
+		}
+		.interactive-layer__pointer{
+			cursor: pointer;
+			position: absolute;
+			transition: opacity 0.2s linear ;
+		}
+		.interactive-layer__pointer:hover{
+			opacity: 0.5;
+		}
+		.interactive-layer__pointer_wrap{
+			transform: translate(-100%,-50%)
+		}
+		.interactive-layer span{
+			margin-right: 1em;
+		}
+		.interactive-layer span,.interactive-layer img{
+			display: inline-block;
+			vertical-align: middle;
+		}
+    </style>
+</head>
+<body>
+	<div class="interactive-layer">
+
+		<div class="interactive-layer__pointer js-trigger">
+			<div class="interactive-layer__pointer_wrap">
+				<span>click me</span> 
+				<img src="models/point.svg" alt="">
+			</div>
+		</div>
+
+	</div>
+	<div id="canvas"></div>
+	<script src="js/app.js" type="module"></script>
+</body>
+</html>
