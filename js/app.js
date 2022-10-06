@@ -52,6 +52,7 @@ export default class Sketch {
     this.event = createInputEvents(
       document.querySelector(".interactive-layer")
     );
+    this.mobile = options.mobile;
     this.scene = new THREE.Scene();
     this.scene1 = new THREE.Scene();
     this.sceneParticles = new THREE.Scene();
@@ -279,7 +280,13 @@ export default class Sketch {
     this.height = this.container.offsetHeight;
     this.renderer.setSize(this.width, this.height);
     this.camera.aspect = this.width / this.height;
-
+    if(this.mobile()){
+      this.startX = 0;
+      this.endX = 0
+    } else{
+      this.startX = -0.2;
+      this.endX = -0.08
+    }
     this.camera.updateProjectionMatrix();
   }
 
@@ -331,7 +338,7 @@ export default class Sketch {
     });
 
     this.geometry = new THREE.BufferGeometry();
-    let number = 1000;
+    let number = 3000;
     this.number = number;
     let positions = new Float32Array(number * 3);
     let rotations = new Float32Array(number);
@@ -524,9 +531,10 @@ export default class Sketch {
       for (let i = 0; i < this.number; i++) {
         this.sampler.sample(this._position, this._normal);
         // console.log(this._position.x, this._position.y, this._position.z);
-        this._position.multiplyScalar(0.08);
-        this._position.z -= 0.03;
-        // this._position.x+=0.02
+        this._position.multiplyScalar(0.05);
+        this._position.z -= 0.01;
+        this._position.x+=0.01
+        this._position.y-=0.03
 
         let testmesh = new THREE.Mesh(
           new THREE.BoxGeometry(0.001, 0.001, 0.001),
@@ -577,14 +585,14 @@ export default class Sketch {
       veinsCheck = "";
       bias = 0.2;
       uVeins = 1;
-      mat.blending = THREE.AdditiveBlending;
+      // mat.blending = THREE.AdditiveBlending;
     }
     if (name === "vertex_cache") {
       color = new THREE.Color(1, 0, 0);
       veinsCheck = "";
       bias = 0.0;
       uVeins = 1;
-      mat.blending = THREE.AdditiveBlending;
+      // mat.blending = THREE.AdditiveBlending;
     }
     if (name === "vertex_cache_4") {
       ttt = new THREE.TextureLoader().load(t2);
@@ -669,6 +677,7 @@ export default class Sketch {
           // gl_FragColor.a = 1.;
           distanceColor = gl_FragColor+ vec4(vec3(f),f);
           // gl_FragColor.a = f;
+          gl_FragColor.a = 1.;
         } else{
           // discard;
           // vec4 defaultColor = texture2D(map,vUv);
@@ -680,6 +689,7 @@ export default class Sketch {
 
         // zoom in animation
         gl_FragColor = mix(distanceColor,gl_FragColor,uProgress);
+        
 
 
 
@@ -806,7 +816,7 @@ export default class Sketch {
     this.mouseTarget.lerp(this.mouse, 0.05);
     this.particleMaterial.uniforms.uTime.value = this.time;
     this.camera.position.z = lerp(0.7, 0.4, this.progress);
-    this.camera.lookAt(lerp(-0.2, -0.08, this.progress), 0, 0);
+    this.camera.lookAt(lerp(this.startX, this.endX, this.progress), 0, 0);
     this.time += 0.02;
     if (this.mixer) this.mixer.update(this.clock.getDelta() * this.heartbeat);
 
@@ -818,8 +828,8 @@ export default class Sketch {
     this.renderer.render(this.scene1, this.camera);
     this.renderer.clearDepth();
 
-    this.renderer.render(this.sceneParticles, this.camera);
-    this.renderer.clearDepth();
+    // this.renderer.render(this.sceneParticles, this.camera);
+    // this.renderer.clearDepth();
 
     this.groupHeart.rotation.y +=
       0.05 * (90 * this.targetRotation.x - this.groupHeart.rotation.y);
@@ -827,9 +837,11 @@ export default class Sketch {
 
     this.sceneParticles.rotation.y = this.groupHeart.rotation.y;
 
+    this.renderer.render(this.sceneParticles, this.camera);
+    this.renderer.clearDepth();
     this.renderer.render(this.sceneHeart, this.camera);
 
-    this.renderer.render(this.sceneParticles, this.camera);
+    
 
     this.scene.rotation.y = 0.3 * this.mouseTarget.x * (1 - this.progress);
     this.scene1.rotation.y = 0.3 * this.mouseTarget.x * (1 - this.progress);
@@ -839,4 +851,5 @@ export default class Sketch {
 
 new Sketch({
   dom: document.getElementById("canvas"),
+  mobile: ()=> window.matchMedia('(max-width: 600px)').matches
 });

@@ -53,9 +53,9 @@ void main() {
   float by = (1.-t)*(1.-t)*start.y + 2.*(1.-t)*t*control.y + t*t*target.y;
   float bz = t*aFinalPosition.z;
 
-  pos.x = bx;
-  pos.y = by;
-  pos.z = bz;
+  pos.x = bx + + t*0.01*sin(uTime*0.05 + aRandom*7.);
+  pos.y = by + t*0.01*cos(uTime*0.1 + aRandom*7.);
+  pos.z = bz + t*0.01*sin(uTime*0.1 + aRandom*7.);
 
 
 
@@ -69,7 +69,7 @@ void main() {
 
 
   vec4 mvPosition = modelViewMatrix * vec4( pos, 1. );
-  gl_PointSize = uSize*20.* (1. + aRandom)* ( 1. / - mvPosition.z );
+  gl_PointSize = uSize*15.* (1. + aRandom)* ( 1. / - mvPosition.z );
   vDepth =  mvPosition.z;
   gl_Position = projectionMatrix * mvPosition;
 }

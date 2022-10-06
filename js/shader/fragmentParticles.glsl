@@ -49,6 +49,7 @@ void main()	{
 	finalColor.rgb *=coloring;
 
 	gl_FragColor = finalColor*startOpacity;
-	gl_FragColor.a *= max(0.5,fadeOut);
+	gl_FragColor.a *= 3.*color.a*max(0.5,fadeOut);
+	// gl_FragColor = color;
 	// gl_FragColor = vec4(vec3(blur*initcolor*0.3),1.);
 }
