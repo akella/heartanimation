@@ -25,7 +25,7 @@ import t4 from "../models/t/heart_Aorta_veins2.jpg";
 import mask from "../models/t/heart_Body_mask.jpg";
 
 // ====
-// _       _       _       _       _       _       _       _ 
+// _       _       _       _       _       _       _       _
 // _-(_)-  _-(_)-  _-(_)-  _-(_)-  _-(_)-  _-(_)-  _-(_)-  _-(_)-
 // `(___)  `(___)  `(___)  `(___)  `(___)  `(___)  `(___)  `(___)
 // jgs // \\   // \\   // \\   // \\   // \\   // \\   // \\   // \\
@@ -52,6 +52,7 @@ export default class Sketch {
     this.event = createInputEvents(
       document.querySelector(".interactive-layer")
     );
+    this.callback = options.callback || function () {};
     this.mobile = options.mobile;
     this.scene = new THREE.Scene();
     this.scene1 = new THREE.Scene();
@@ -69,6 +70,7 @@ export default class Sketch {
       alpha: true,
       antialias: true,
     });
+    this.materials = [];
     this.pmremGenerator = new THREE.PMREMGenerator(this.renderer);
     this.pmremGenerator.compileEquirectangularShader();
     this.renderer.autoClear = false;
@@ -126,17 +128,62 @@ export default class Sketch {
 
     this.isPlaying = true;
 
-    this.mouseEvents();
-    this.addParticles();
-    this.addObjects();
-    this.addHeart();
+    let t1Promise = new Promise((resolve, reject) => {
+      new THREE.TextureLoader().load(t1, (texture) => {
+        this.t1 = texture;
+        resolve(texture);
+      });
+    });
 
-    this.resize();
-    this.render();
-    this.setupResize();
-    this.addLights();
-    this.settings();
-    this.triggers();
+    let t2Promise = new Promise((resolve, reject) => {
+      new THREE.TextureLoader().load(t2, (texture) => {
+        this.t2 = texture;
+        resolve(texture);
+      });
+    });
+
+    let t3Promise = new Promise((resolve, reject) => {
+      new THREE.TextureLoader().load(t3, (texture) => {
+        this.t3 = texture;
+        resolve(texture);
+      });
+    });
+
+    let t4Promise = new Promise((resolve, reject) => {
+      new THREE.TextureLoader().load(t4, (texture) => {
+        this.t4 = texture;
+        resolve(texture);
+      });
+    });
+
+    let maskPromise = new Promise((resolve, reject) => {
+      new THREE.TextureLoader().load(mask, (texture) => {
+        this.mask = texture;
+        resolve(texture);
+      });
+    });
+
+    this.addParticles();
+    Promise.all([t1Promise, t2Promise, t3Promise, t4Promise, maskPromise]).then(
+      () => {
+        
+        Promise.all([this.addObjects(), this.addHeart()]).then(() => {
+          // alert("a");
+          this.mouseEvents();
+          
+          // this.addObjects();
+          // this.addHeart();
+
+          this.resize();
+          this.render();
+          this.setupResize();
+          this.addLights();
+          this.settings();
+          this.triggers();
+          this.callback()
+        });
+      }
+    );
   }
 
   triggers() {
@@ -229,34 +276,34 @@ export default class Sketch {
         );
       },
     };
-    if(DEBUG){
-    this.gui = new GUI();
-    this.gui.add(this.settings, "progress", 0, 1, 0.01).onChange((val) => {
-      this.particleMaterial.uniforms.uProgress.value = val;
-    });
-    this.gui.add(this.settings, "uSize", 0, 2, 0.01).onChange((val) => {
-      this.particleMaterial.uniforms.uSize.value = val;
-    });
+    if (DEBUG) {
+      this.gui = new GUI();
+      this.gui.add(this.settings, "progress", 0, 1, 0.01).onChange((val) => {
+        this.particleMaterial.uniforms.uProgress.value = val;
+      });
+      this.gui.add(this.settings, "uSize", 0, 2, 0.01).onChange((val) => {
+        this.particleMaterial.uniforms.uSize.value = val;
+      });
 
-    this.gui.addColor(this.settings, "uParticleColor").onChange((val) => {
-      this.particleMaterial.uniforms.uColor.value = new THREE.Color(val);
-    });
-    this.gui.add(this.settings, "health", 0, 1, 0.01).onChange((val) => {
-      this.setHealthProgress(val);
-    });
-    this.gui.add(this.settings, "animateHeart");
-    this.gui.addColor(this.settings, "uColor").onChange((val) => {
-      this.materials.forEach((m) => {
-        if (m.userData.shader)
-          m.userData.shader.uniforms.uColor1.value = new THREE.Color(val);
+      this.gui.addColor(this.settings, "uParticleColor").onChange((val) => {
+        this.particleMaterial.uniforms.uColor.value = new THREE.Color(val);
       });
-    });
-    this.gui.addColor(this.settings, "uColorSick").onChange((val) => {
-      this.materials.forEach((m) => {
-        if (m.userData.shader)
-          m.userData.shader.uniforms.uColorSick.value = new THREE.Color(val);
+      this.gui.add(this.settings, "health", 0, 1, 0.01).onChange((val) => {
+        this.setHealthProgress(val);
       });
-    });
+      this.gui.add(this.settings, "animateHeart");
+      this.gui.addColor(this.settings, "uColor").onChange((val) => {
+        this.materials.forEach((m) => {
+          if (m.userData.shader)
+            m.userData.shader.uniforms.uColor1.value = new THREE.Color(val);
+        });
+      });
+      this.gui.addColor(this.settings, "uColorSick").onChange((val) => {
+        this.materials.forEach((m) => {
+          if (m.userData.shader)
+            m.userData.shader.uniforms.uColorSick.value = new THREE.Color(val);
+        });
+      });
     }
   }
 
@@ -280,12 +327,12 @@ export default class Sketch {
     this.height = this.container.offsetHeight;
     this.renderer.setSize(this.width, this.height);
     this.camera.aspect = this.width / this.height;
-    if(this.mobile()){
+    if (this.mobile()) {
       this.startX = 0;
-      this.endX = 0
-    } else{
+      this.endX = 0;
+    } else {
       this.startX = -0.2;
-      this.endX = -0.08
+      this.endX = -0.08;
     }
     this.camera.updateProjectionMatrix();
   }
@@ -394,165 +441,166 @@ export default class Sketch {
   }
 
   addObjects() {
-    let that = this;
+    return new Promise((resolve, reject) => {
+      this.fresnel = new THREE.ShaderMaterial({
+        extensions: {
+          derivatives: "#extension GL_OES_standard_derivatives : enable",
+        },
+        uniforms: {
+          time: { value: 0 },
+          uFade: { value: 0 },
+          uScale: { value: 1 },
+          uOpacity: { value: 1 },
+          uBias: { value: 0 },
+          uPower: { value: 2 },
+          uColor: { value: new THREE.Color(0.706, 0.044, 0.041) },
+          resolution: { value: new THREE.Vector4() },
+        },
+        // wireframe: true,
+        transparent: true,
+        vertexShader: vertex,
+        fragmentShader: heartfragment,
+        // side: THREE.DoubleSide
+        // depthTest: false,
+        // depthWrite: false
+      });
 
-    this.fresnel = new THREE.ShaderMaterial({
-      extensions: {
-        derivatives: "#extension GL_OES_standard_derivatives : enable",
-      },
-      uniforms: {
-        time: { value: 0 },
-        uFade: { value: 0 },
-        uScale: { value: 1 },
-        uOpacity: { value: 1 },
-        uBias: { value: 0 },
-        uPower: { value: 2 },
-        uColor: { value: new THREE.Color(0.706, 0.044, 0.041) },
-        resolution: { value: new THREE.Vector4() },
-      },
-      // wireframe: true,
-      transparent: true,
-      vertexShader: vertex,
-      fragmentShader: heartfragment,
-      // side: THREE.DoubleSide
-      // depthTest: false,
-      // depthWrite: false
+      // this.material = new THREE.ShaderMaterial({
+      //   extensions: {
+      //     derivatives: "#extension GL_OES_standard_derivatives : enable"
+      //   },
+      //   side: THREE.DoubleSide,
+      //   uniforms: {
+      //     time: { value: 0 },
+      //     resolution: { value: new THREE.Vector4() },
+      //   },
+      //   wireframe: true,
+      //   transparent: true,
+      //   vertexShader: vertex,
+      //   fragmentShader: fragment,
+      //   // side: THREE.DoubleSide
+      // });
+
+      this.gltf.load(body, (gltf) => {
+        resolve();
+        this.body = gltf.scene.getObjectByName("material_Body");
+        // console.log(this.body);
+        this.body.material = this.fresnel.clone();
+
+        // this.body.material =new THREE.MeshBasicMaterial({color: 0x000000});
+        let s = 120;
+        let s1 = s + 4;
+        this.body.scale.set(s, s, s);
+        this.scene.add(this.body);
+        this.body1 = this.body.clone();
+        // this.body1.position.x = -0.2
+        this.body1.scale.set(s1, s1, s1);
+        this.body1.material = this.fresnel.clone();
+
+        // this.body1.material.uniforms.uOpacity.value = 0.5;
+        this.body1.material.blending = THREE.CustomBlending;
+        this.body1.material.blendEquation = THREE.AddEquation; //default
+        this.body1.material.blendSrc = THREE.SrcColorFactor; //default
+        this.body1.material.blendDst = THREE.OneMinusDstColorFactor; //default
+        this.scene1.add(this.body1);
+        this.body1.material.uniforms.uBias.value = 0.0;
+        this.body1.material.uniforms.uFade.value = 0.2;
+        this.body1.material.uniforms.uPower.value = 0.5;
+        this.body.material.uniforms.uFade.value = 0.3;
+
+        // this.body1.material.opacity = 0.5
+
+        this.body.material.uniforms.uColor.value = new THREE.Color(
+          0.241,
+          0.043,
+          0.355
+        );
+        this.body1.material.uniforms.uColor.value = new THREE.Color(
+          0.048,
+          0.079,
+          0.601
+        );
+
+        this.body.material.uniforms.uColor.value = new THREE.Color("#E90817");
+        this.body1.material.uniforms.uColor.value = new THREE.Color("#00f");
+
+        // this.body1.material.blending = this.body.material.blending = THREE.AdditiveBlending
+      });
+
+      // this.geometry = new THREE.PlaneGeometry(1, 1, 1, 1);
+
+      // this.plane = new THREE.Mesh(this.geometry, this.material);
+      // this.scene.add(this.plane);
     });
-
-    // this.material = new THREE.ShaderMaterial({
-    //   extensions: {
-    //     derivatives: "#extension GL_OES_standard_derivatives : enable"
-    //   },
-    //   side: THREE.DoubleSide,
-    //   uniforms: {
-    //     time: { value: 0 },
-    //     resolution: { value: new THREE.Vector4() },
-    //   },
-    //   wireframe: true,
-    //   transparent: true,
-    //   vertexShader: vertex,
-    //   fragmentShader: fragment,
-    //   // side: THREE.DoubleSide
-    // });
-
-    this.gltf.load(body, (gltf) => {
-      this.body = gltf.scene.getObjectByName("material_Body");
-      // console.log(this.body);
-      this.body.material = this.fresnel.clone();
-
-      // this.body.material =new THREE.MeshBasicMaterial({color: 0x000000});
-      let s = 120;
-      let s1 = s + 4;
-      this.body.scale.set(s, s, s);
-      this.scene.add(this.body);
-      this.body1 = this.body.clone();
-      // this.body1.position.x = -0.2
-      this.body1.scale.set(s1, s1, s1);
-      this.body1.material = this.fresnel.clone();
-
-      // this.body1.material.uniforms.uOpacity.value = 0.5;
-      this.body1.material.blending = THREE.CustomBlending;
-      this.body1.material.blendEquation = THREE.AddEquation; //default
-      this.body1.material.blendSrc = THREE.SrcColorFactor; //default
-      this.body1.material.blendDst = THREE.OneMinusDstColorFactor; //default
-      this.scene1.add(this.body1);
-      this.body1.material.uniforms.uBias.value = 0.0;
-      this.body1.material.uniforms.uFade.value = 0.2;
-      this.body1.material.uniforms.uPower.value = 0.5;
-      this.body.material.uniforms.uFade.value = 0.3;
-
-      // this.body1.material.opacity = 0.5
-
-      this.body.material.uniforms.uColor.value = new THREE.Color(
-        0.241,
-        0.043,
-        0.355
-      );
-      this.body1.material.uniforms.uColor.value = new THREE.Color(
-        0.048,
-        0.079,
-        0.601
-      );
-
-      this.body.material.uniforms.uColor.value = new THREE.Color("#E90817");
-      this.body1.material.uniforms.uColor.value = new THREE.Color("#00f");
-
-      // this.body1.material.blending = this.body.material.blending = THREE.AdditiveBlending
-    });
-
-    // this.geometry = new THREE.PlaneGeometry(1, 1, 1, 1);
-
-    // this.plane = new THREE.Mesh(this.geometry, this.material);
-    // this.scene.add(this.plane);
   }
 
   addHeart() {
-    let that = this;
+    return new Promise((resolve, reject) => {
+      this.gltf.load(heartRealSick, (gltf) => {
+        resolve();
+        this.heartreal = gltf.scene;
+        // console.log(this.heartreal, "real heart");
+        this.heartbody = this.heartreal.getObjectByName("vertex_cache_2");
+        // this.heartMaterial = this.heartreal.getObjectByName('vertex_cache_4').material;
+        this.heartreal.traverse((child) => {
+          if (child.isMesh) {
+            // child.material = this.heartMaterial;
+            let mat = child.material.clone();
 
-    this.materials = [];
-    this.gltf.load(heartRealSick, (gltf) => {
-      this.heartreal = gltf.scene;
-      // console.log(this.heartreal, "real heart");
-      this.heartbody = this.heartreal.getObjectByName("vertex_cache_2");
-      // this.heartMaterial = this.heartreal.getObjectByName('vertex_cache_4').material;
-      this.heartreal.traverse((child) => {
-        if (child.isMesh) {
-          // child.material = this.heartMaterial;
-          let mat = child.material.clone();
+            child.material = this.process(mat, child.name);
+            this.materials.push(child.material);
+            // child.material.blending = THREE.AdditiveBlending;
 
-          child.material = this.process(mat, child.name);
-          this.materials.push(child.material);
-          // child.material.blending = THREE.AdditiveBlending;
+            // child.material.uniforms.uColor.value = new THREE.Color('#ff0000')
+            // child.material.uniforms.uBias.value = 0.3
+            // child.material = new THREE.MeshBasicMaterial({color: 0xff0000});
+          }
+        });
+        this.mixer = new THREE.AnimationMixer(this.heartreal);
+        this.mixer.clipAction(gltf.animations[0]).play();
+        this.groupHeart.add(this.heartreal);
 
-          // child.material.uniforms.uColor.value = new THREE.Color('#ff0000')
-          // child.material.uniforms.uBias.value = 0.3
-          // child.material = new THREE.MeshBasicMaterial({color: 0xff0000});
+        this.testmesh = new THREE.Mesh(
+          new THREE.BoxGeometry(0.01, 0.01, 0.01),
+          new THREE.MeshBasicMaterial({ color: 0xffffff })
+        );
+        this.sceneParticles.add(this.testmesh);
+        this.testmesh.position.x = -0.0;
+        this.testmesh.position.z = 0.03;
+        this.testmesh.position.y = -0.05;
+        this.testmesh.visible = false;
+
+        this.sampler = new MeshSurfaceSampler(this.heartbody)
+          .setWeightAttribute("uv")
+          .build();
+
+        let finalpositions = new Float32Array(this.number * 3);
+        for (let i = 0; i < this.number; i++) {
+          this.sampler.sample(this._position, this._normal);
+          // console.log(this._position.x, this._position.y, this._position.z);
+          this._position.multiplyScalar(0.05);
+          this._position.z -= 0.01;
+          this._position.x += 0.01;
+          this._position.y -= 0.03;
+
+          let testmesh = new THREE.Mesh(
+            new THREE.BoxGeometry(0.001, 0.001, 0.001),
+            new THREE.MeshBasicMaterial({ color: 0xffff00 })
+          );
+          testmesh.position.copy(this._position);
+          // this.groupHeart.add(testmesh)
+
+          finalpositions.set(
+            [this._position.x, this._position.y, this._position.z],
+            i * 3
+          );
         }
+
+        this.geometry.setAttribute(
+          "aFinalPosition",
+          new THREE.BufferAttribute(finalpositions, 3)
+        );
       });
-      this.mixer = new THREE.AnimationMixer(this.heartreal);
-      this.mixer.clipAction(gltf.animations[0]).play();
-      this.groupHeart.add(this.heartreal);
-
-      this.testmesh = new THREE.Mesh(
-        new THREE.BoxGeometry(0.01, 0.01, 0.01),
-        new THREE.MeshBasicMaterial({ color: 0xffffff })
-      );
-      this.sceneParticles.add(this.testmesh);
-      this.testmesh.position.x = -0.0;
-      this.testmesh.position.z = 0.03;
-      this.testmesh.position.y = -0.05;
-      this.testmesh.visible = false;
-
-      this.sampler = new MeshSurfaceSampler(this.heartbody)
-        .setWeightAttribute("uv")
-        .build();
-
-      let finalpositions = new Float32Array(this.number * 3);
-      for (let i = 0; i < this.number; i++) {
-        this.sampler.sample(this._position, this._normal);
-        // console.log(this._position.x, this._position.y, this._position.z);
-        this._position.multiplyScalar(0.05);
-        this._position.z -= 0.01;
-        this._position.x+=0.01
-        this._position.y-=0.03
-
-        let testmesh = new THREE.Mesh(
-          new THREE.BoxGeometry(0.001, 0.001, 0.001),
-          new THREE.MeshBasicMaterial({ color: 0xffff00 })
-        );
-        testmesh.position.copy(this._position);
-        // this.groupHeart.add(testmesh)
-
-        finalpositions.set(
-          [this._position.x, this._position.y, this._position.z],
-          i * 3
-        );
-      }
-
-      this.geometry.setAttribute(
-        "aFinalPosition",
-        new THREE.BufferAttribute(finalpositions, 3)
-      );
     });
   }
 
@@ -595,17 +643,17 @@ export default class Sketch {
       // mat.blending = THREE.AdditiveBlending;
     }
     if (name === "vertex_cache_4") {
-      ttt = new THREE.TextureLoader().load(t2);
+      ttt = this.t2;
     }
     if (name === "vertex_cache_3") {
-      ttt = new THREE.TextureLoader().load(t1);
+      ttt = this.t1;
     }
     if (name === "vertex_cache_5") {
-      ttt = new THREE.TextureLoader().load(t4);
+      ttt = this.t4;
     }
     if (name === "vertex_cache_2") {
-      ttt = new THREE.TextureLoader().load(t3);
-      maskTexture = new THREE.TextureLoader().load(mask);
+      ttt = this.t3;
+      maskTexture = this.mask;
       maskTexture.flipY = false;
       maskshader = `
       vec4 mmm = texture2D( uTextureMask, vUv );
@@ -841,8 +889,6 @@ export default class Sketch {
     this.renderer.clearDepth();
     this.renderer.render(this.sceneHeart, this.camera);
 
-    
-
     this.scene.rotation.y = 0.3 * this.mouseTarget.x * (1 - this.progress);
     this.scene1.rotation.y = 0.3 * this.mouseTarget.x * (1 - this.progress);
     this.sceneHeart.rotation.y = 0.3 * this.mouseTarget.x * (1 - this.progress);
@@ -851,5 +897,8 @@ export default class Sketch {
 
 new Sketch({
   dom: document.getElementById("canvas"),
-  mobile: ()=> window.matchMedia('(max-width: 600px)').matches
+  mobile: () => window.matchMedia("(max-width: 600px)").matches,
+  callback: ()=>{
+    console.warn('ALL LOADED!!!')
+  }
 });
