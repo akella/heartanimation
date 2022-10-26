@@ -14,6 +14,7 @@ import fragmentParticles from "./shader/fragmentParticles.glsl";
 import GUI from "lil-gui";
 import gsap from "gsap";
 const createInputEvents = require("simple-input-events");
+import {Howl, Howler} from 'howler';
 
 // ASSETS
 import body from "../models/body.glb";
@@ -23,6 +24,15 @@ import t2 from "../models/t/heart_R_veins2.jpg";
 import t3 from "../models/t/heart_Body_veins3.png";
 import t4 from "../models/t/heart_Aorta_veins2.jpg";
 import mask from "../models/t/heart_Body_mask.jpg";
+
+
+// this needs replacement with variables!!!!
+// ===========================
+import sound1 from '../mp3/scene_1-MP3.mp3'
+import sound2 from '../mp3/Scene_2_-_With_a_diseased_heart_(Heart_Beats_Fast).mp3'
+import sound3 from '../mp3/Scene_3_-_The_medicine_enters_the_heart_(magic_wind_spell_2).mp3'
+import sound4 from '../mp3/Scene_4_-_Healthy_heart_with_the_normal_heartbeat_(Heart_Beat_04).mp3'
+
 
 // ====
 // _       _       _       _       _       _       _       _
@@ -52,6 +62,39 @@ export default class Sketch {
     this.event = createInputEvents(
       document.querySelector(".interactive-layer")
     );
+
+    this.sound1 =  new Howl({
+      src: [sound1],
+      autoplay: true,
+      loop: true,
+      volume: 0.2
+    });
+
+    this.sound2 =  new Howl({
+      src: [sound2],
+      autoplay: false,
+      loop: true,
+      volume: 0.2
+    });
+    
+
+    this.sound4 =  new Howl({
+      src: [sound4],
+      autoplay: false,
+      loop: true,
+      volume: 0.2
+    });
+
+    this.sound3 =  new Howl({
+      src: [sound3],
+      autoplay: false,
+      loop: false,
+      volume: 0.2,
+      onend: ()=> {
+        this.sound4.play()
+      }
+    });
+
     this.callback = options.callback || function () {};
     this.mobile = options.mobile;
     this.scene = new THREE.Scene();
@@ -121,7 +164,10 @@ export default class Sketch {
     this.dracoLoader = new DRACOLoader();
     this.dracoLoader.setDecoderPath(
       "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/js/libs/draco/"
-    ); // use a full url path
+    ); 
+    // this.dracoLoader.setDecoderPath(
+    //   "/draco/"
+    // ); 
     this.gltf = new GLTFLoader();
     this.gltf.setDRACOLoader(this.dracoLoader);
     this.gltf.setMeshoptDecoder(MeshoptDecoder);
@@ -188,6 +234,7 @@ export default class Sketch {
 
   triggers() {
     document.querySelector(".js-trigger").addEventListener("click", () => {
+      this.sound2.play()
       if (this.progress < 0.5) {
         gsap.to(this, {
           progress: 1,
@@ -201,6 +248,8 @@ export default class Sketch {
         });
       } else {
         this.settings.animateHeart();
+        this.sound2.fade(0.2,0,0.3)
+        this.sound3.play()
       }
     });
   }
@@ -863,7 +912,12 @@ export default class Sketch {
     if (this.testmesh) this.positionTooltip();
     this.mouseTarget.lerp(this.mouse, 0.05);
     this.particleMaterial.uniforms.uTime.value = this.time;
-    this.camera.position.z = lerp(0.7, 0.4, this.progress);
+    if(this.mobile){
+      this.camera.position.z = lerp(0.8, 0.4, this.progress);
+    } else{
+      this.camera.position.z = lerp(0.7, 0.4, this.progress);
+    }
+    
     this.camera.lookAt(lerp(this.startX, this.endX, this.progress), 0, 0);
     this.time += 0.02;
     if (this.mixer) this.mixer.update(this.clock.getDelta() * this.heartbeat);
