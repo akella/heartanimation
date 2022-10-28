@@ -24,6 +24,7 @@ import t2 from "../models/t/heart_R_veins2.jpg";
 import t3 from "../models/t/heart_Body_veins3.png";
 import t4 from "../models/t/heart_Aorta_veins2.jpg";
 import mask from "../models/t/heart_Body_mask.jpg";
+import rotateme from '../rotateme.png'
 
 
 // this needs replacement with variables!!!!
@@ -246,6 +247,10 @@ export default class Sketch {
               .querySelector("span").innerHTML = "Cure me";
           },
         });
+        gsap.to(this.rotatemeMesh.material,{
+          opacity: 1,
+          duration: 1,
+        })
       } else {
         this.settings.animateHeart();
         this.sound2.fade(0.2,0,0.3)
@@ -574,6 +579,23 @@ export default class Sketch {
         this.body1.material.uniforms.uColor.value = new THREE.Color("#00f");
 
         // this.body1.material.blending = this.body.material.blending = THREE.AdditiveBlending
+
+
+        // add arrows
+        this.rotatemeMesh = new THREE.Mesh(
+          new THREE.PlaneGeometry(508*0.0005,114*0.0005),
+          new THREE.MeshBasicMaterial({
+            color: 0xff0000,
+            transparent: true,
+            opacity: 0,
+            map: new THREE.TextureLoader().load(rotateme),
+            side: THREE.DoubleSide
+          })
+        )
+        this.rotatemeMesh.position.y = -.1
+
+        this.sceneHeart.add(this.rotatemeMesh);
+
       });
 
       // this.geometry = new THREE.PlaneGeometry(1, 1, 1, 1);
