@@ -935,7 +935,9 @@ export default class Sketch {
     this.mouseTarget.lerp(this.mouse, 0.05);
     this.particleMaterial.uniforms.uTime.value = this.time;
     if(this.mobile){
-      this.camera.position.z = lerp(0.8, 0.4, this.progress);
+      this.camera.position.z = lerp(0.8, 0.5, this.progress);
+      // this.camera.position.x = lerp(0., 0.4, this.progress);
+      // this.camera.lookAt(0,this.progress*1.5,0)
     } else{
       this.camera.position.z = lerp(0.7, 0.4, this.progress);
     }
